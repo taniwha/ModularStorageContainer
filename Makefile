@@ -1,7 +1,8 @@
+MODNAME		:= ModularStorageContainer
 KSPDIR		:= ${HOME}/ksp/KSP_linux
 MANAGED		:= ${KSPDIR}/KSP_Data/Managed
 GAMEDATA	:= ${KSPDIR}/GameData
-MSCGAMEDATA := ${GAMEDATA}/ModularStorageContainer
+MSCGAMEDATA := ${GAMEDATA}/${MODNAME}
 PLUGINDIR	:= ${MSCGAMEDATA}/Plugins
 
 RESGEN2	:= resgen2
@@ -33,7 +34,7 @@ install:
 	cp ${DATA} ${MSCGAMEDATA}
 
 info:
-	@echo "ModularStorageContainer Build Information"
+	@echo "${MODNAME} Build Information"
 	@echo "    resgen2:  ${RESGEN2}"
 	@echo "    gmcs:     ${GMCS}"
 	@echo "    git:      ${GIT}"
@@ -43,4 +44,4 @@ info:
 	@echo "    Plugin:   ${PLUGINDIR}"
 
 release:
-	tools/make-release
+	tools/make-release ${MODNAME}
