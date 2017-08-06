@@ -54,7 +54,6 @@ namespace ModularStorageContainer {
 			if (StorageModules == null) {
 				FindStorageModules ();
 			}
-			containers = new List<IStorageContainer> ();
 			if (part.partInfo != null && part.partInfo.partPrefab != null) {
 				int moduleIndex;
 				for (moduleIndex = 0; moduleIndex < part.Modules.Count;
@@ -64,11 +63,9 @@ namespace ModularStorageContainer {
 					}
 				}
 				Part partPrefab = part.partInfo.partPrefab;
-				var mscPrefab = partPrefab.Modules[moduleIndex] as ModuleStorageContainer;
-
-				foreach (var c in mscPrefab.containers) {
-					containers.Add (c.Clone (this));
-				}
+				OnCopy (partPrefab.Modules[moduleIndex]);
+			} else {
+				containers = new List<IStorageContainer> ();
 			}
 		}
 
@@ -86,27 +83,61 @@ namespace ModularStorageContainer {
 			}
 		}
 
+		void DumpPartResources ()
+		{
+			foreach (var r in part.Resources) {
+				Debug.LogFormat ("    {0}: {1}/{2}", r.resourceName, r.amount, r.maxAmount);
+			}
+		}
+
 		public override void OnCopy (PartModule fromModule)
 		{
 			Debug.LogFormat ("[ModuleStorageContainer] OnCopy: {0}", fromModule);
+			var mscPrefab = fromModule as ModuleStorageContainer;
+
+			containers = new List<IStorageContainer> ();
+			foreach (var c in mscPrefab.containers) {
+				containers.Add (c.Clone (this));
+			}
+		}
+
+		IStorageContainer CreateContainer (string name)
+		{
+			if (!StorageModules.ContainsKey (name)) {
+				Debug.Log ("ModuleStorageContainer: unknown container type: " + name);
+				return null;
+			}
+			var parms = new object[] {this};
+			return (IStorageContainer) StorageModules[name].Invoke (parms);
+		}
+
+		void BuildContainers (ConfigNode []container_nodes)
+		{
+			foreach (var node in container_nodes) {
+				var name = node.GetValue ("name");
+				IStorageContainer sc = CreateContainer (name);
+				if (sc == null) {
+					continue;
+				}
+				sc.Load (node);
+				containers.Add (sc);
+			}
+		}
+
+		void LoadContainers (ConfigNode []container_nodes)
+		{
 		}
 
 		public override void OnLoad (ConfigNode node)
 		{
 			ClearPartResources ();
 
-			var parms = new object[] {this};
+			ConfigNode []container_nodes = node.GetNodes ("Container");
 
-			foreach (var container_node in node.GetNodes("Container")) {
-				var name = container_node.GetValue ("name");
-				if (!StorageModules.ContainsKey (name)) {
-					Debug.Log ("ModuleStorageContainer: unknown container type: " + name);
-					continue;
-				}
-				IStorageContainer sc;
-				sc = (IStorageContainer) StorageModules[name].Invoke (parms);
-				sc.Load (container_node);
-				containers.Add (sc);
+			if (part.partInfo != null && part.partInfo.partPrefab != null) {
+				LoadContainers (container_nodes);
+			} else {
+				BuildContainers (container_nodes);
 			}
 			massDirty = true;
 			costDirty = true;
