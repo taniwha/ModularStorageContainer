@@ -53,10 +53,10 @@ namespace ModularStorageContainer.Containers.Resource
 
 		public void Save (ConfigNode node)
 		{
-			node.AddValue ("volume", volume.ToString ("R"));
+			node.AddValue ("volume", volume.ToString ("G17"));
 			foreach (var t in tanks) {
 				t.UpdateAmount (owner.part);
-				node.AddValue (t.name, String.Format ("{0:R}, {1:R}", t.amount, t.maxAmount));
+				node.AddValue (t.name, String.Format ("{0:G17}, {1:G17}", t.amount, t.maxAmount));
 			}
 		}
 
@@ -94,6 +94,7 @@ namespace ModularStorageContainer.Containers.Resource
 		public IStorageContainer Clone (ModuleStorageContainer owner)
 		{
 			ContainerResource clone = new ContainerResource ();
+			clone.volume = volume;
 			clone.owner = owner;
 			clone.tanks = new List<Tank> ();
 			foreach (var t in tanks) {
