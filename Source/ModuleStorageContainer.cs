@@ -20,9 +20,23 @@ namespace ModularStorageContainer {
 		double totalMass;
 		double totalCost;
 
+		public void MarkWindowDirty ()
+		{
+			if (UIPartActionController.Instance == null) {
+				// no controller means no window to mark dirty
+				return;
+			}
+			var action_window = UIPartActionController.Instance.GetItem(part);
+			if (action_window == null) {
+				return;
+			}
+			action_window.displayDirty = true;
+		}
+
 		void ClearPartResources ()
 		{
 			part.Resources.dict.Clear ();
+			MarkWindowDirty ();
 		}
 
 		public void ContainerMassModified ()
@@ -83,7 +97,7 @@ namespace ModularStorageContainer {
 			}
 		}
 
-		void DumpPartResources ()
+		public void DumpPartResources ()
 		{
 			foreach (var r in part.Resources) {
 				Debug.LogFormat ("    {0}: {1}/{2}", r.resourceName, r.amount, r.maxAmount);
@@ -126,6 +140,8 @@ namespace ModularStorageContainer {
 
 		void LoadContainers (ConfigNode []container_nodes)
 		{
+			containers.Clear ();
+			BuildContainers (container_nodes);
 		}
 
 		public override void OnLoad (ConfigNode node)
@@ -141,6 +157,7 @@ namespace ModularStorageContainer {
 			}
 			massDirty = true;
 			costDirty = true;
+			MarkWindowDirty ();
 		}
 
 		public override void OnSave (ConfigNode node)
