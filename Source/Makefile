@@ -51,12 +51,16 @@ bin/ModularStorageContainer.dll: ${MSC_FILES}
 		-out:$@ $^
 
 clean:
-	rm -f ${TARGETS} Assembly/AssemblyInfo.cs
-	rmdir bin
+	rm -f ${TARGETS} ModularStorageContainer.dox Assembly/AssemblyInfo.cs
+	rm -rf docs
+	rm -rf bin
 
 install: all
 	mkdir -p ${PLUGINDIR}
 	cp ${TARGETS} ${PLUGINDIR}
 #	cp ${DOC_FILES} ${MSCGAMEDATA}
 
-.PHONY: all clean install
+doc: version
+	doxygen ModularStorageContainer.dox
+
+.PHONY: all clean install doc

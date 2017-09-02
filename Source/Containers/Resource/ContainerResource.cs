@@ -11,6 +11,7 @@ namespace ModularStorageContainer.Containers.Resource
 
 		public string name { get { return "Resource"; } }
 		public double minVolume { get { return 0; } }
+		public double maxVolume { get { return 0; } }
 		public double granularity { get { return 0; } }
 		public double volume { get; private set; }
 		public double mass { get; private set; }

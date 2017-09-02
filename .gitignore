@@ -1,4 +1,5 @@
 .DS_Store
+*.dox
 *.dll
 *.dll.mdb
 *.orig
@@ -14,3 +15,4 @@ bin
 *.csproj.user
 
 Assets/*.png
+Source/docs
