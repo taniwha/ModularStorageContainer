@@ -11,9 +11,11 @@ MSC_FILES := \
 	Assembly/VersionReport.cs	\
 	Containers/Resource/ContainerResource.cs	\
 	Containers/Resource/Tank.cs	\
+	ContainerWindow.cs			\
 	IStorageContainer.cs		\
 	ModuleStorageContainer.cs	\
 	Utils/PartExt.cs			\
+	Utils/Styles.cs				\
 	$e
 
 DOC_FILES := \

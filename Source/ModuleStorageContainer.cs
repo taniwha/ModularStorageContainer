@@ -83,11 +83,22 @@ namespace ModularStorageContainer {
 			}
 		}
 
+		bool isEditor { get { return HighLogic.LoadedSceneIsEditor; } }
+
 		public override void OnStart (PartModule.StartState state)
 		{
 			foreach (var sc in containers) {
 				sc.OnStart (state);
 			}
+
+			Events["HideUI"].active = false;
+			Events["ShowUI"].active = true;
+
+			if (isEditor) {
+				ContainerWindow.OnActionGroupEditorOpened.Add (OnActionGroupEditorOpened);
+				ContainerWindow.OnActionGroupEditorClosed.Add (OnActionGroupEditorClosed);
+			}
+
 		}
 
 		void OnDestroy ()
@@ -201,6 +212,38 @@ namespace ModularStorageContainer {
 		public ModifierChangeWhen GetModuleCostChangeWhen ()
 		{
 			return ModifierChangeWhen.CONSTANTLY;
+		}
+
+		void OnActionGroupEditorOpened ()
+		{
+			Events["HideUI"].active = false;
+			Events["ShowUI"].active = false;
+		}
+
+		void OnActionGroupEditorClosed ()
+		{
+			Events["HideUI"].active = false;
+			Events["ShowUI"].active = true;
+		}
+
+		[KSPEvent (guiActiveEditor = true, guiName = "Hide UI", active = false)]
+		public void HideUI ()
+		{
+			ContainerWindow.HideGUI ();
+			UpdateMenus (false);
+		}
+
+		[KSPEvent (guiActiveEditor = true, guiName = "Show UI", active = false)]
+		public void ShowUI ()
+		{
+			ContainerWindow.ShowGUI (this);
+			UpdateMenus (true);
+		}
+
+		void UpdateMenus (bool visible)
+		{
+			Events["HideUI"].active = visible;
+			Events["ShowUI"].active = !visible;
 		}
 	}
 

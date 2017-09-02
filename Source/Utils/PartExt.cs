@@ -6,7 +6,7 @@ using UnityEngine;
 namespace ModularStorageContainer
 {
 
-	static class PartResourceListExt
+	static class PartExt
 	{
 		public static PartResource AddResource (this Part part, string name, double amt, double maxAmt)
 		{
@@ -16,6 +16,11 @@ namespace ModularStorageContainer
 			node.AddValue ("maxAmount", maxAmt);
 
 			return part.AddResource(node);
+		}
+
+		public static ModuleStorageContainer FindContainer (this Part part)
+		{
+			return part.FindModuleImplementing<ModuleStorageContainer> ();
 		}
 	}
 
