@@ -19,11 +19,16 @@ namespace ModularStorageContainer.Containers.Resource
 
 		List<Tank> tanks;
 
-		void SetPartResources (Part part)
+		void SetPartResources ()
 		{
+			owner.ClearPartResources ();
+			Part part = owner.part;
 			for (int i = 0; i < tanks.Count; i++) {
 				var t = tanks[i];
 				part.AddResource (t.name, t.amount, t.maxAmount);
+			}
+			if (HighLogic.LoadedSceneIsEditor) {
+				GameEvents.onEditorShipModified.Fire (EditorLogic.fetch.ship);
 			}
 		}
 
@@ -49,7 +54,7 @@ namespace ModularStorageContainer.Containers.Resource
 				var t = new Tank (name, amounts[0], amounts[1]);
 				tanks.Add (t);
 			}
-			SetPartResources (owner.part);
+			SetPartResources ();
 		}
 
 		public void Save (ConfigNode node)
@@ -102,6 +107,161 @@ namespace ModularStorageContainer.Containers.Resource
 				clone.tanks.Add (new Tank(t));
 			}
 			return clone;
+		}
+
+		int FindTank (string resource)
+		{
+			for (int i = tanks.Count; i-- > 0; ) {
+				if (tanks[i].name == resource) {
+					return i;
+				}
+			}
+			return -1;
+		}
+
+		double resourceVolume = -1;
+
+		void AddTank (PartResourceDefinition res)
+		{
+			if (GUILayout.Button ("Add")) {
+				double vol = (volume - resourceVolume) * 1000;
+				double maxAmount = vol / res.volume;
+				double amount = maxAmount;
+				if (!res.isTweakable) {
+					amount = 0;
+				}
+				var t = new Tank (res.name, amount, maxAmount);
+				tanks.Add (t);
+				resourceVolume = -1;
+				oldAmounts = null;
+				SetPartResources ();
+			}
+		}
+
+		void RemoveTank (int tankInd)
+		{
+			if (GUILayout.Button ("Remove")) {
+				tanks.RemoveAt(tankInd);
+				resourceVolume = -1;
+				oldAmounts = null;
+				SetPartResources ();
+			}
+		}
+
+		bool UpdateTank (Tank tank, string newAmount)
+		{
+			var res = PartResourceLibrary.Instance.GetDefinition (tank.name);
+			double maxAmount;
+			if (!double.TryParse (newAmount, out maxAmount)) {
+				return false;
+			}
+			double limit = (volume - resourceVolume) * 1000 / res.volume;
+			limit += tank.maxAmount;
+			if (maxAmount > limit) {
+				maxAmount = limit;
+			}
+			tank.maxAmount = maxAmount;
+			tank.amount = maxAmount;
+			if (!res.isTweakable) {
+				tank.amount = 0;
+			}
+			resourceVolume = -1;
+			SetPartResources ();
+			return true;
+		}
+
+		string []oldAmounts;
+		string []newAmounts;
+		GUILayoutOption inputWidth;
+
+		void EditTank (int tankInd)
+		{
+			Tank tank = tanks[tankInd];
+
+			string name = "" + tankInd + ".ContainerResource.MSC";
+			GUI.SetNextControlName (name);
+			if (GUI.GetNameOfFocusedControl () == name) {
+				if (Event.current.isKey) {
+					switch (Event.current.keyCode) {
+						case KeyCode.Return:
+						case KeyCode.KeypadEnter:
+							Event.current.Use ();
+							if (newAmounts[tankInd] != oldAmounts[tankInd]) {
+								if (UpdateTank (tank, newAmounts[tankInd])) {
+									oldAmounts[tankInd] = null;
+								}
+							}
+							break;
+					}
+				}
+			} else {
+				newAmounts[tankInd] = oldAmounts[tankInd];
+			}
+			if (oldAmounts[tankInd] == null) {
+				oldAmounts[tankInd] = tank.maxAmount.ToString ();
+				newAmounts[tankInd] = oldAmounts[tankInd];
+			}
+			GUIStyle style = ContainerWindow.unchanged;
+			if (newAmounts[tankInd] != oldAmounts[tankInd]) {
+				style = ContainerWindow.changed;
+			}
+			newAmounts[tankInd] = GUILayout.TextField (newAmounts[tankInd], style, inputWidth);
+		}
+
+		void ResourceLine (PartResourceDefinition res)
+		{
+			GUILayout.BeginHorizontal ();
+			GUILayout.Label (res.name);
+			GUILayout.FlexibleSpace ();
+			if (resourceVolume >= 0) {
+				int tankInd = FindTank (res.name);
+				if (tankInd != -1) {
+					EditTank (tankInd);
+					RemoveTank (tankInd);
+				} else {
+					if (resourceVolume < volume) {
+						AddTank (res);
+					}
+				}
+			}
+			GUILayout.EndHorizontal ();
+		}
+
+		static List<PartResourceDefinition> resources;
+		public void OnGUI ()
+		{
+			if (inputWidth == null) {
+				inputWidth = GUILayout.Width (127);
+			}
+			if (resources == null) {
+				resources = new List<PartResourceDefinition> ();
+				foreach (var res in PartResourceLibrary.Instance.resourceDefinitions) {
+					if (res.isVisible) {
+						resources.Add (res);
+					}
+				}
+			}
+			if (resourceVolume == -1) {
+				resourceVolume = 0;
+				for (int i = 0; i < tanks.Count; i++) {
+					Tank t = tanks[i];
+					var res = PartResourceLibrary.Instance.GetDefinition (t.name);
+					resourceVolume += t.maxAmount * res.volume;;
+				}
+				resourceVolume /= 1000;
+			}
+			if (oldAmounts == null) {
+				oldAmounts = new string[tanks.Count];
+				newAmounts = new string[tanks.Count];
+			}
+			GUILayout.BeginVertical ();
+			GUILayout.Label ("Volume: " + resourceVolume + "/" + volume + "kL");
+			GUILayout.Label ("Mass: " + mass + "t");
+			GUILayout.Label ("Cost: " + cost);
+			for (int i = 0; i < resources.Count; i++) {
+				ResourceLine (resources[i]);
+			}
+			GUILayout.EndVertical ();
 		}
 	}
 

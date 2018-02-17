@@ -65,6 +65,8 @@ namespace ModularStorageContainer {
 		/// adding to a new part.
 		IStorageContainer Clone (ModuleStorageContainer owner);
 
+		/// Used for GUI updates. Called by the container window's OnGUI.
+		void OnGUI ();
 	}
 
 }

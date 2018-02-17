@@ -33,9 +33,9 @@ namespace ModularStorageContainer {
 			action_window.displayDirty = true;
 		}
 
-		void ClearPartResources ()
+		public void ClearPartResources ()
 		{
-			part.Resources.dict.Clear ();
+			part.Resources.Clear ();
 			MarkWindowDirty ();
 		}
 

@@ -17,16 +17,16 @@ namespace ModularStorageContainer
 
         public int offsetGUIPos = -1;
 
-        private static GUIStyle unchanged;
-        private static GUIStyle changed;
-        private static GUIStyle greyed;
-        private static GUIStyle overfull;
+        internal static GUIStyle unchanged;
+        internal static GUIStyle changed;
+        internal static GUIStyle greyed;
+        internal static GUIStyle overfull;
         public static string myToolTip = "";
 
 		static ContainerWindow instance;
 
         private int counterTT;
-        private Vector2 scrollPos;
+        private ScrollView scrollView = new ScrollView (600);
 
 		bool ActionGroupMode;
 		Part selected_part;
@@ -212,9 +212,18 @@ namespace ModularStorageContainer
 
                 DisplayMass();
 
-				scrollPos = GUILayout.BeginScrollView (scrollPos);
+				scrollView.Begin ();
+				for (int i = 0; i < container_module.containers.Count; i++) {
+					var container = container_module.containers[i];
+					GUILayout.Label (container.name);
+					GUILayout.BeginHorizontal ();
+					GUILayout.Space (40);
+					container.OnGUI ();
+					GUILayout.EndHorizontal ();
+				}
+				scrollView.End ();
 
-				GUILayout.EndScrollView ();
+				GUILayout.FlexibleSpace ();
 				GUILayout.Label (ModularStorageContainerVersionReport.GetVersion ());
 			}
 			GUILayout.EndVertical ();

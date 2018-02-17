@@ -25,6 +25,13 @@ namespace ModularStorageContainer.Containers.Resource
 			maxAmount = double.Parse (maxAmt);
 		}
 
+		public Tank(string name, double amt, double maxAmt)
+		{
+			this.name = name;
+			amount = amt;
+			maxAmount = maxAmt;
+		}
+
 		public void UpdateAmount (Part part)
 		{
 			amount = part.Resources[name].amount;

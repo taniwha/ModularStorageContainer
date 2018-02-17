@@ -14,6 +14,7 @@ MSC_FILES := \
 	ContainerWindow.cs			\
 	IStorageContainer.cs		\
 	ModuleStorageContainer.cs	\
+	GUI/ScrollView.cs			\
 	Utils/PartExt.cs			\
 	Utils/Styles.cs				\
 	$e
