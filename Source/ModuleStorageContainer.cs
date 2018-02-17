@@ -95,6 +95,7 @@ namespace ModularStorageContainer {
 			Events["ShowUI"].active = true;
 
 			if (isEditor) {
+				GameEvents.onPartActionUIDismiss.Add (OnPartActionGuiDismiss);
 				ContainerWindow.OnActionGroupEditorOpened.Add (OnActionGroupEditorOpened);
 				ContainerWindow.OnActionGroupEditorClosed.Add (OnActionGroupEditorClosed);
 			}
@@ -212,6 +213,13 @@ namespace ModularStorageContainer {
 		public ModifierChangeWhen GetModuleCostChangeWhen ()
 		{
 			return ModifierChangeWhen.CONSTANTLY;
+		}
+
+		private void OnPartActionGuiDismiss(Part p)
+		{
+			if (p == part) {
+				HideUI ();
+			}
 		}
 
 		void OnActionGroupEditorOpened ()
