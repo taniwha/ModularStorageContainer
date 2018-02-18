@@ -19,7 +19,7 @@ namespace ModularStorageContainer.Containers.Resource
 
 		List<Tank> tanks;
 
-		void SetPartResources ()
+		void _SetPartResources ()
 		{
 			owner.ClearPartResources ();
 			Part part = owner.part;
@@ -27,6 +27,11 @@ namespace ModularStorageContainer.Containers.Resource
 				var t = tanks[i];
 				part.AddResource (t.name, t.amount, t.maxAmount);
 			}
+		}
+
+		void SetPartResources ()
+		{
+			_SetPartResources ();
 			if (HighLogic.LoadedSceneIsEditor) {
 				GameEvents.onEditorShipModified.Fire (EditorLogic.fetch.ship);
 			}
@@ -106,6 +111,7 @@ namespace ModularStorageContainer.Containers.Resource
 			foreach (var t in tanks) {
 				clone.tanks.Add (new Tank(t));
 			}
+			clone._SetPartResources ();
 			return clone;
 		}
 
