@@ -36,6 +36,7 @@ namespace ModularStorageContainer {
 		public void ClearPartResources ()
 		{
 			part.Resources.Clear ();
+			part.SimulationResources.Clear ();
 			MarkWindowDirty ();
 		}
 
