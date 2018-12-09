@@ -30,7 +30,10 @@ namespace ModularStorageContainer
 
 		bool ActionGroupMode;
 		Part selected_part;
+
 		ModuleStorageContainer container_module;
+		ModuleStorageContainer []symmetry_container_modules;
+		IStorageContainer []symmetry_containers;
 
 		public static void HideGUI ()
 		{
@@ -47,6 +50,14 @@ namespace ModularStorageContainer
 		{
 			if (instance != null) {
 				instance.container_module = container_module;
+				Part p = container_module.part;
+				int count = p.symmetryCounterparts.Count;
+				instance.symmetry_container_modules = new ModuleStorageContainer[count];
+				instance.symmetry_containers = new IStorageContainer[count];
+				for (int i = 0; i < count; i++) {
+					Part sym = p.symmetryCounterparts[i];
+					instance.symmetry_container_modules[i] = sym.FindContainer ();
+				}
 				instance.UpdateGUIState ();
 			}
 		}
@@ -215,10 +226,13 @@ namespace ModularStorageContainer
 				scrollView.Begin ();
 				for (int i = 0; i < container_module.containers.Count; i++) {
 					var container = container_module.containers[i];
+					for (int j = 0; j < symmetry_container_modules.Length; j++) {
+						symmetry_containers[j] = symmetry_container_modules[j].containers[i];
+					}
 					GUILayout.Label (container.name);
 					GUILayout.BeginHorizontal ();
 					GUILayout.Space (40);
-					container.OnGUI ();
+					container.OnGUI (symmetry_containers);
 					GUILayout.EndHorizontal ();
 				}
 				scrollView.End ();

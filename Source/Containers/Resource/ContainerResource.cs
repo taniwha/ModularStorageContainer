@@ -127,7 +127,16 @@ namespace ModularStorageContainer.Containers.Resource
 
 		double resourceVolume = -1;
 
-		void AddTank (PartResourceDefinition res)
+		void AddTank (string name, double amount, double maxAmount)
+		{
+			var t = new Tank (name, amount, maxAmount);
+			tanks.Add (t);
+			resourceVolume = -1;
+			oldAmounts = null;
+			SetPartResources ();
+		}
+
+		void AddTank_GUI (PartResourceDefinition res)
 		{
 			if (GUILayout.Button ("Add")) {
 				double vol = (volume - resourceVolume) * 1000;
@@ -136,26 +145,45 @@ namespace ModularStorageContainer.Containers.Resource
 				if (!res.isTweakable) {
 					amount = 0;
 				}
-				var t = new Tank (res.name, amount, maxAmount);
-				tanks.Add (t);
-				resourceVolume = -1;
-				oldAmounts = null;
-				SetPartResources ();
+				AddTank (res.name, amount, maxAmount);
+				for (int i = counterparts.Length; i-- > 0; ) {
+					var c = (ContainerResource) counterparts[i];
+					c.AddTank (res.name, amount, maxAmount);
+				}
 			}
 		}
 
 		void RemoveTank (int tankInd)
 		{
+			tanks.RemoveAt(tankInd);
+			resourceVolume = -1;
+			oldAmounts = null;
+			SetPartResources ();
+		}
+
+		void RemoveTank_GUI (int tankInd)
+		{
 			if (GUILayout.Button ("Remove")) {
-				tanks.RemoveAt(tankInd);
-				resourceVolume = -1;
-				oldAmounts = null;
-				SetPartResources ();
+				RemoveTank (tankInd);
+				for (int i = counterparts.Length; i-- > 0; ) {
+					var c = (ContainerResource) counterparts[i];
+					c.RemoveTank (tankInd);
+				}
 			}
 		}
 
-		bool UpdateTank (Tank tank, string newAmount)
+		void UpdateTank (int tankInd, double amount, double maxAmount)
 		{
+			Tank tank = tanks[tankInd];
+			tank.maxAmount = maxAmount;
+			tank.amount = amount;
+			resourceVolume = -1;
+			SetPartResources ();
+		}
+
+		bool UpdateTank_GUI (int tankInd, string newAmount)
+		{
+			Tank tank = tanks[tankInd];
 			var res = PartResourceLibrary.Instance.GetDefinition (tank.name);
 			double maxAmount;
 			if (!double.TryParse (newAmount, out maxAmount)) {
@@ -166,21 +194,24 @@ namespace ModularStorageContainer.Containers.Resource
 			if (maxAmount > limit) {
 				maxAmount = limit;
 			}
-			tank.maxAmount = maxAmount;
-			tank.amount = maxAmount;
+			double amount = maxAmount;
 			if (!res.isTweakable) {
-				tank.amount = 0;
+				amount = 0;
 			}
-			resourceVolume = -1;
-			SetPartResources ();
+			UpdateTank (tankInd, amount, maxAmount);
+			for (int i = counterparts.Length; i-- > 0; ) {
+				var c = (ContainerResource) counterparts[i];
+				c.UpdateTank (tankInd, amount, maxAmount);
+			}
 			return true;
 		}
 
+		IStorageContainer []counterparts;
 		string []oldAmounts;
 		string []newAmounts;
 		GUILayoutOption inputWidth;
 
-		void EditTank (int tankInd)
+		void EditTank_GUI (int tankInd)
 		{
 			Tank tank = tanks[tankInd];
 
@@ -193,7 +224,7 @@ namespace ModularStorageContainer.Containers.Resource
 						case KeyCode.KeypadEnter:
 							Event.current.Use ();
 							if (newAmounts[tankInd] != oldAmounts[tankInd]) {
-								if (UpdateTank (tank, newAmounts[tankInd])) {
+								if (UpdateTank_GUI (tankInd, newAmounts[tankInd])) {
 									oldAmounts[tankInd] = null;
 								}
 							}
@@ -222,11 +253,11 @@ namespace ModularStorageContainer.Containers.Resource
 			if (resourceVolume >= 0) {
 				int tankInd = FindTank (res.name);
 				if (tankInd != -1) {
-					EditTank (tankInd);
-					RemoveTank (tankInd);
+					EditTank_GUI (tankInd);
+					RemoveTank_GUI (tankInd);
 				} else {
 					if (resourceVolume < volume) {
-						AddTank (res);
+						AddTank_GUI (res);
 					}
 				}
 			}
@@ -234,8 +265,10 @@ namespace ModularStorageContainer.Containers.Resource
 		}
 
 		static List<PartResourceDefinition> resources;
-		public void OnGUI ()
+		public void OnGUI (IStorageContainer []counterparts)
 		{
+			this.counterparts = counterparts;
+
 			if (inputWidth == null) {
 				inputWidth = GUILayout.Width (127);
 			}
