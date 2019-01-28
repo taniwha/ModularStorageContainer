@@ -172,6 +172,28 @@ namespace ModularStorageContainer.Containers.Resource
 			}
 		}
 
+		void RemoveAll ()
+		{
+			tanks.Clear ();
+			resourceVolume = -1;
+			oldAmounts = null;
+			SetPartResources ();
+		}
+
+		void RemoveAll_GUI ()
+		{
+			bool gui_enabled = GUI.enabled;
+			GUI.enabled = tanks.Count > 0;
+			if (GUILayout.Button ("Remove All")) {
+				RemoveAll ();
+				for (int i = counterparts.Length; i-- > 0; ) {
+					var c = (ContainerResource) counterparts[i];
+					c.RemoveAll ();
+				}
+			}
+			GUI.enabled = gui_enabled;
+		}
+
 		void UpdateTank (int tankInd, double amount, double maxAmount)
 		{
 			Tank tank = tanks[tankInd];
@@ -297,6 +319,7 @@ namespace ModularStorageContainer.Containers.Resource
 			GUILayout.Label ("Volume: " + resourceVolume + "/" + volume + "kL");
 			GUILayout.Label ("Mass: " + mass + "t");
 			GUILayout.Label ("Cost: " + cost);
+			RemoveAll_GUI ();
 			for (int i = 0; i < resources.Count; i++) {
 				ResourceLine (resources[i]);
 			}
