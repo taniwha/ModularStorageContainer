@@ -10,12 +10,24 @@ namespace ModularStorageContainer
 	{
 		public static PartResource AddResource (this Part part, string name, double amt, double maxAmt)
 		{
-			ConfigNode node = new ConfigNode ("RESOURCE");
-			node.AddValue ("name", name);
-			node.AddValue ("amount", amt);
-			node.AddValue ("maxAmount", maxAmt);
+			var resDef = PartResourceLibrary.Instance.GetDefinition (name);
 
-			return part.AddResource(node);
+			PartResource partResource = new PartResource (part);
+			partResource.resourceName = name;
+			partResource.SetInfo (resDef);
+
+			partResource.amount = amt;
+			partResource.maxAmount = maxAmt;
+			partResource._flowState = true;
+
+			partResource.isTweakable = resDef.isTweakable;
+			partResource.isVisible = resDef.isVisible;
+			partResource.hideFlow = false;
+			partResource._flowMode = PartResource.FlowMode.Both;
+
+			part.Resources.dict.Add (resDef.id, partResource);
+
+			return partResource;
 		}
 
 		public static ModuleStorageContainer FindContainer (this Part part)
@@ -23,5 +35,4 @@ namespace ModularStorageContainer
 			return part.FindModuleImplementing<ModuleStorageContainer> ();
 		}
 	}
-
 }

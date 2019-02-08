@@ -27,6 +27,7 @@ namespace ModularStorageContainer.Containers.Resource
 				var t = tanks[i];
 				part.AddResource (t.name, t.amount, t.maxAmount);
 			}
+			part.ResetSimulationResources ();
 		}
 
 		void SetPartResources ()
@@ -34,6 +35,7 @@ namespace ModularStorageContainer.Containers.Resource
 			_SetPartResources ();
 			if (HighLogic.LoadedSceneIsEditor) {
 				GameEvents.onEditorShipModified.Fire (EditorLogic.fetch.ship);
+				GameEvents.onPartResourceListChange.Fire (owner.part);
 			}
 		}
 

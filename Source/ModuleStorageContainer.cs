@@ -37,6 +37,7 @@ namespace ModularStorageContainer {
 		{
 			part.Resources.Clear ();
 			part.SimulationResources.Clear ();
+			GameEvents.onPartResourceListChange.Fire (part);
 			MarkWindowDirty ();
 		}
 
@@ -107,6 +108,11 @@ namespace ModularStorageContainer {
 		{
 			foreach (var sc in containers) {
 				sc.OnDestroy ();
+			}
+			if (isEditor) {
+				GameEvents.onPartActionUIDismiss.Remove (OnPartActionGuiDismiss);
+				ContainerWindow.OnActionGroupEditorOpened.Remove (OnActionGroupEditorOpened);
+				ContainerWindow.OnActionGroupEditorClosed.Remove (OnActionGroupEditorClosed);
 			}
 		}
 
