@@ -20,6 +20,8 @@ MSC_FILES := \
 	Utils/Styles.cs				\
 	$e
 
+include KodeUI/KodeUI.inc
+
 DOC_FILES := \
 	License.txt \
 	README.md
@@ -73,7 +75,7 @@ UNITY := \
 	-r:UnityEngine.IMGUIModule.dll \
 	$e
 
-bin/ModularStorageContainer.dll: ${MSC_FILES}
+bin/ModularStorageContainer.dll: ${MSC_FILES} ${KodeUI}
 	@mkdir -p bin
 	${CSC} ${CSCFLAGS} ${SYSTEM} ${KSP} ${UNITY} -out:$@ $^
 
