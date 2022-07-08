@@ -1,8 +1,9 @@
-KSPDIR		:= ${HOME}/ksp/KSP_linux
-MANAGED		:= ${KSPDIR}/KSP_Data/Managed
-GAMEDATA	:= ${KSPDIR}/GameData
-MSCGAMEDATA := ${GAMEDATA}/ModularStorageContainer
-PLUGINDIR	:= ${MSCGAMEDATA}/Plugins
+export MODNAME		:= ModularStorageContainer
+export KSPDIR		:= ${HOME}/ksp/KSP_linux
+export MANAGED		:= ${KSPDIR}/KSP_Data/Managed
+export GAMEDATA		:= ${KSPDIR}/GameData
+export MODGAMEDATA	:= ${GAMEDATA}/${MODNAME}
+export PLUGINDIR	:= ${MODGAMEDATA}/Plugins
 
 TARGETS		:= bin/ModularStorageContainer.dll
 
@@ -24,8 +25,8 @@ DOC_FILES := \
 	README.md
 
 RESGEN2		:= resgen2
-GMCS		:= mcs
-GMCSFLAGS	:= -optimize -warnaserror
+CSC			:= csc
+CSCFLAGS	:= -highentropyva- -noconfig -nostdlib+ -t:library -optimize -warnaserror -debug
 GIT			:= git
 TAR			:= tar
 ZIP			:= zip
@@ -37,21 +38,44 @@ version:
 	@../tools/git-version.sh
 
 info:
-	@echo "ModularStorageContainer Build Information"
+	@echo "${MODNAME} Build Information"
 	@echo "    resgen2:    ${RESGEN2}"
-	@echo "    gmcs:       ${GMCS}"
-	@echo "    gmcs flags: ${GMCSFLAGS}"
+	@echo "    csc:        ${CSC}"
+	@echo "    csc flags:  ${CSCFLAGS}"
 	@echo "    git:        ${GIT}"
 	@echo "    tar:        ${TAR}"
 	@echo "    zip:        ${ZIP}"
 	@echo "    KSP Data:   ${KSPDIR}"
 
+SYSTEM := \
+	-lib:${MANAGED} \
+	-r:${MANAGED}/mscorlib.dll \
+	-r:${MANAGED}/System.dll \
+	-r:${MANAGED}/System.Core.dll
+
+KSP := \
+	-r:Assembly-CSharp.dll \
+	-r:Assembly-CSharp-firstpass.dll
+
+UNITY := \
+	-r:UnityEngine.dll \
+	-r:UnityEngine.UI.dll \
+	-r:UnityEngine.UIModule.dll \
+	-r:UnityEngine.TextRenderingModule.dll \
+	-r:UnityEngine.AnimationModule.dll \
+	-r:UnityEngine.CoreModule.dll \
+	-r:UnityEngine.PhysicsModule.dll \
+	-r:UnityEngine.Physics2DModule.dll \
+	-r:UnityEngine.InputLegacyModule.dll \
+	-r:UnityEngine.ImageConversionModule.dll \
+	-r:UnityEngine.ParticleSystemModule.dll \
+	-r:UnityEngine.AudioModule.dll \
+	-r:UnityEngine.IMGUIModule.dll \
+	$e
+
 bin/ModularStorageContainer.dll: ${MSC_FILES}
 	@mkdir -p bin
-	${GMCS} ${GMCSFLAGS} -t:library -lib:${MANAGED} \
-		-r:Assembly-CSharp,Assembly-CSharp-firstpass \
-		-r:UnityEngine,UnityEngine.UI,UnityEngine.CoreModule,UnityEngine.IMGUIModule,UnityEngine.InputLegacyModule,UnityEngine.TextRenderingModule \
-		-out:$@ $^
+	${CSC} ${CSCFLAGS} ${SYSTEM} ${KSP} ${UNITY} -out:$@ $^
 
 clean:
 	rm -f ${TARGETS} ModularStorageContainer.dox Assembly/AssemblyInfo.cs
@@ -61,7 +85,7 @@ clean:
 install: all
 	mkdir -p ${PLUGINDIR}
 	cp ${TARGETS} ${PLUGINDIR}
-#	cp ${DOC_FILES} ${MSCGAMEDATA}
+#	cp ${DOC_FILES} ${MODGAMEDATA}
 
 doc: version
 	doxygen ModularStorageContainer.dox
