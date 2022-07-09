@@ -4,6 +4,8 @@ using System.Reflection;
 using System;
 using UnityEngine;
 
+using KodeUI;
+
 namespace ModularStorageContainer {
 
 	///Interface for container modules.
@@ -65,8 +67,9 @@ namespace ModularStorageContainer {
 		/// adding to a new part.
 		IStorageContainer Clone (ModuleStorageContainer owner);
 
-		/// Used for GUI updates. Called by the container window's OnGUI.
-		void OnGUI (IStorageContainer []counterparts);
+		/// Used to create the container's UI. Called by the container window's
+		/// RebuildContainers.
+		void CreateUI (Layout content, IStorageContainer []counterparts);
 	}
 
 }

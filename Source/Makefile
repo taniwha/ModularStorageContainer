@@ -10,14 +10,18 @@ TARGETS		:= bin/ModularStorageContainer.dll
 MSC_FILES := \
     Assembly/AssemblyInfo.cs	\
 	Assembly/VersionReport.cs	\
-	Containers/Resource/ContainerResource.cs	\
-	Containers/Resource/Tank.cs	\
-	ContainerWindow.cs			\
 	IStorageContainer.cs		\
 	ModuleStorageContainer.cs	\
-	GUI/ScrollView.cs			\
+	Containers/Resource/ContainerResource.cs	\
+	Containers/Resource/Tank.cs	\
+	UI/ContainerWindow.cs		\
+	UI/InfoLine.cs				\
+	UI/InputLine.cs				\
+	UI/ResourceInfo.cs			\
+	UI/ResourceInfoView.cs		\
+	UI/ResourcePanel.cs			\
+	UI/WindowManager.cs			\
 	Utils/PartExt.cs			\
-	Utils/Styles.cs				\
 	$e
 
 include KodeUI/KodeUI.inc
@@ -72,7 +76,6 @@ UNITY := \
 	-r:UnityEngine.ImageConversionModule.dll \
 	-r:UnityEngine.ParticleSystemModule.dll \
 	-r:UnityEngine.AudioModule.dll \
-	-r:UnityEngine.IMGUIModule.dll \
 	$e
 
 bin/ModularStorageContainer.dll: ${MSC_FILES} ${KodeUI}

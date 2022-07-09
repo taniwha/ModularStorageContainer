@@ -3,6 +3,8 @@ using System.Collections;
 using System;
 using UnityEngine;
 
+using KodeUI;
+
 namespace ModularStorageContainer.Containers.Resource
 {
 	public class ContainerResource: IStorageContainer
@@ -17,7 +19,26 @@ namespace ModularStorageContainer.Containers.Resource
 		public double mass { get; private set; }
 		public double cost { get; private set; }
 
-		List<Tank> tanks;
+		private double _ressourceVolume = -1;
+		public double resourceVolume
+		{
+			get {
+				if (_ressourceVolume == -1) {
+					_ressourceVolume = 0;
+					for (int i = 0; i < tanks.Count; i++) {
+						var t = tanks[i];
+						var res = PartResourceLibrary.Instance.GetDefinition (t.name);
+						_ressourceVolume += t.maxAmount * res.volume;
+					}
+				}
+				return _ressourceVolume;
+			}
+			private set {
+				_ressourceVolume = value;
+			}
+		}
+
+		public List<Tank> tanks { get; private set; }
 
 		void _SetPartResources ()
 		{
@@ -69,7 +90,7 @@ namespace ModularStorageContainer.Containers.Resource
 			node.AddValue ("volume", volume.ToString ("G17"));
 			foreach (var t in tanks) {
 				t.UpdateAmount (owner.part);
-				node.AddValue (t.name, String.Format ("{0:G17}, {1:G17}", t.amount, t.maxAmount));
+				node.AddValue (t.name, $"{t.amount:G17}, {t.maxAmount:G17}");
 			}
 		}
 
@@ -117,7 +138,7 @@ namespace ModularStorageContainer.Containers.Resource
 			return clone;
 		}
 
-		int FindTank (string resource)
+		internal int FindTank (string resource)
 		{
 			for (int i = tanks.Count; i-- > 0; ) {
 				if (tanks[i].name == resource) {
@@ -127,73 +148,65 @@ namespace ModularStorageContainer.Containers.Resource
 			return -1;
 		}
 
-		double resourceVolume = -1;
-
-		void AddTank (string name, double amount, double maxAmount)
+		void addTank (string name, double amount, double maxAmount)
 		{
 			var t = new Tank (name, amount, maxAmount);
 			tanks.Add (t);
-			resourceVolume = -1;
-			oldAmounts = null;
 			SetPartResources ();
+			resourceVolume = -1;
 		}
 
-		void AddTank_GUI (PartResourceDefinition res)
-		{
-			if (GUILayout.Button ("Add")) {
-				double vol = (volume - resourceVolume) * 1000;
-				double maxAmount = vol / res.volume;
-				double amount = maxAmount;
-				if (!res.isTweakable) {
-					amount = 0;
-				}
-				AddTank (res.name, amount, maxAmount);
-				for (int i = counterparts.Length; i-- > 0; ) {
-					var c = (ContainerResource) counterparts[i];
-					c.AddTank (res.name, amount, maxAmount);
-				}
-			}
-		}
-
-		void RemoveTank (int tankInd)
+		void removeTank (int tankInd)
 		{
 			tanks.RemoveAt(tankInd);
-			resourceVolume = -1;
-			oldAmounts = null;
 			SetPartResources ();
+			resourceVolume = -1;
 		}
 
-		void RemoveTank_GUI (int tankInd)
-		{
-			if (GUILayout.Button ("Remove")) {
-				RemoveTank (tankInd);
-				for (int i = counterparts.Length; i-- > 0; ) {
-					var c = (ContainerResource) counterparts[i];
-					c.RemoveTank (tankInd);
-				}
-			}
-		}
-
-		void RemoveAll ()
+		void removeAll ()
 		{
 			tanks.Clear ();
-			resourceVolume = -1;
-			oldAmounts = null;
 			SetPartResources ();
+			resourceVolume = -1;
 		}
 
-		void RemoveAll_GUI ()
+		IStorageContainer []counterparts;
+
+		public void RemoveAll ()
 		{
-			bool gui_enabled = GUI.enabled;
-			GUI.enabled = tanks.Count > 0;
-			if (GUILayout.Button ("Remove All")) {
-				RemoveAll ();
-				for (int i = counterparts.Length; i-- > 0; ) {
-					var c = (ContainerResource) counterparts[i];
-					c.RemoveAll ();
-				}
+			removeAll ();
+			for (int i = counterparts.Length; i-- > 0; ) {
+				var c = (ContainerResource) counterparts[i];
+				c.removeAll ();
 			}
-			GUI.enabled = gui_enabled;
+		}
+
+		public void AddTank (PartResourceDefinition res)
+		{
+			double vol = volume * 1000 - resourceVolume;
+			double maxAmount = vol / res.volume;
+			double amount = maxAmount;
+			if (!res.isTweakable) {
+				amount = 0;
+			}
+			if (maxAmount <= 0) {
+				return;
+			}
+			addTank (res.name, amount, maxAmount);
+			for (int i = counterparts.Length; i-- > 0; ) {
+				var c = (ContainerResource) counterparts[i];
+				c.addTank (res.name, amount, maxAmount);
+			}
+		}
+
+		public void RemoveTank (PartResourceDefinition res)
+		{
+			int tankInd = FindTank (res.name);
+			removeTank (tankInd);
+			for (int i = counterparts.Length; i-- > 0; ) {
+				var c = (ContainerResource) counterparts[i];
+				c.removeTank (tankInd);
+			}
 		}
 
 		void UpdateTank (int tankInd, double amount, double maxAmount)
@@ -205,15 +218,15 @@ namespace ModularStorageContainer.Containers.Resource
 			SetPartResources ();
 		}
 
-		bool UpdateTank_GUI (int tankInd, string newAmount)
+		public bool UpdateTank (PartResourceDefinition res, string newAmount)
 		{
+			int tankInd = FindTank (res.name);
 			Tank tank = tanks[tankInd];
-			var res = PartResourceLibrary.Instance.GetDefinition (tank.name);
 			double maxAmount;
 			if (!double.TryParse (newAmount, out maxAmount)) {
 				return false;
 			}
-			double limit = (volume - resourceVolume) * 1000 / res.volume;
+			double limit = (volume * 1000 - resourceVolume) / res.volume;
 			limit += tank.maxAmount;
 			if (maxAmount > limit) {
 				maxAmount = limit;
@@ -230,102 +243,11 @@ namespace ModularStorageContainer.Containers.Resource
 			return true;
 		}
 
-		IStorageContainer []counterparts;
-		string []oldAmounts;
-		string []newAmounts;
-		GUILayoutOption inputWidth;
-
-		void EditTank_GUI (int tankInd)
-		{
-			Tank tank = tanks[tankInd];
-
-			string name = "" + tankInd + ".ContainerResource.MSC";
-			GUI.SetNextControlName (name);
-			if (GUI.GetNameOfFocusedControl () == name) {
-				if (Event.current.isKey) {
-					switch (Event.current.keyCode) {
-						case KeyCode.Return:
-						case KeyCode.KeypadEnter:
-							Event.current.Use ();
-							if (newAmounts[tankInd] != oldAmounts[tankInd]) {
-								if (UpdateTank_GUI (tankInd, newAmounts[tankInd])) {
-									oldAmounts[tankInd] = null;
-								}
-							}
-							break;
-					}
-				}
-			} else {
-				newAmounts[tankInd] = oldAmounts[tankInd];
-			}
-			if (oldAmounts[tankInd] == null) {
-				oldAmounts[tankInd] = tank.maxAmount.ToString ();
-				newAmounts[tankInd] = oldAmounts[tankInd];
-			}
-			GUIStyle style = ContainerWindow.unchanged;
-			if (newAmounts[tankInd] != oldAmounts[tankInd]) {
-				style = ContainerWindow.changed;
-			}
-			newAmounts[tankInd] = GUILayout.TextField (newAmounts[tankInd], style, inputWidth);
-		}
-
-		void ResourceLine (PartResourceDefinition res)
-		{
-			GUILayout.BeginHorizontal ();
-			GUILayout.Label (res.name);
-			GUILayout.FlexibleSpace ();
-			if (resourceVolume >= 0) {
-				int tankInd = FindTank (res.name);
-				if (tankInd != -1) {
-					EditTank_GUI (tankInd);
-					RemoveTank_GUI (tankInd);
-				} else {
-					if (resourceVolume < volume) {
-						AddTank_GUI (res);
-					}
-				}
-			}
-			GUILayout.EndHorizontal ();
-		}
-
-		static List<PartResourceDefinition> resources;
-		public void OnGUI (IStorageContainer []counterparts)
+		public void CreateUI (Layout content, IStorageContainer []counterparts)
 		{
 			this.counterparts = counterparts;
-
-			if (inputWidth == null) {
-				inputWidth = GUILayout.Width (127);
-			}
-			if (resources == null) {
-				resources = new List<PartResourceDefinition> ();
-				foreach (var res in PartResourceLibrary.Instance.resourceDefinitions) {
-					if (res.isVisible) {
-						resources.Add (res);
-					}
-				}
-			}
-			if (resourceVolume == -1) {
-				resourceVolume = 0;
-				for (int i = 0; i < tanks.Count; i++) {
-					Tank t = tanks[i];
-					var res = PartResourceLibrary.Instance.GetDefinition (t.name);
-					resourceVolume += t.maxAmount * res.volume;;
-				}
-				resourceVolume /= 1000;
-			}
-			if (oldAmounts == null) {
-				oldAmounts = new string[tanks.Count];
-				newAmounts = new string[tanks.Count];
-			}
-			GUILayout.BeginVertical ();
-			GUILayout.Label ("Volume: " + resourceVolume + "/" + volume + "kL");
-			GUILayout.Label ("Mass: " + mass + "t");
-			GUILayout.Label ("Cost: " + cost);
-			RemoveAll_GUI ();
-			for (int i = 0; i < resources.Count; i++) {
-				ResourceLine (resources[i]);
-			}
-			GUILayout.EndVertical ();
+			var panel = UIKit.CreateUI<ResourcePanel> (content.rectTransform, "MSC.ResourcePanel");
+			panel.SetContainer (this, counterparts);
 		}
 	}
 

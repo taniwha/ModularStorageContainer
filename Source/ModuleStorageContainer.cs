@@ -98,8 +98,8 @@ namespace ModularStorageContainer {
 
 			if (isEditor) {
 				GameEvents.onPartActionUIDismiss.Add (OnPartActionGuiDismiss);
-				ContainerWindow.OnActionGroupEditorOpened.Add (OnActionGroupEditorOpened);
-				ContainerWindow.OnActionGroupEditorClosed.Add (OnActionGroupEditorClosed);
+				MSCWindowManager.OnActionGroupEditorOpened.Add (OnActionGroupEditorOpened);
+				MSCWindowManager.OnActionGroupEditorClosed.Add (OnActionGroupEditorClosed);
 			}
 
 		}
@@ -111,8 +111,8 @@ namespace ModularStorageContainer {
 			}
 			if (isEditor) {
 				GameEvents.onPartActionUIDismiss.Remove (OnPartActionGuiDismiss);
-				ContainerWindow.OnActionGroupEditorOpened.Remove (OnActionGroupEditorOpened);
-				ContainerWindow.OnActionGroupEditorClosed.Remove (OnActionGroupEditorClosed);
+				MSCWindowManager.OnActionGroupEditorOpened.Remove (OnActionGroupEditorOpened);
+				MSCWindowManager.OnActionGroupEditorClosed.Remove (OnActionGroupEditorClosed);
 			}
 		}
 
@@ -244,14 +244,14 @@ namespace ModularStorageContainer {
 		[KSPEvent (guiActiveEditor = true, guiName = "Hide UI", active = false)]
 		public void HideUI ()
 		{
-			ContainerWindow.HideGUI ();
+			MSCWindowManager.HideGUI ();
 			UpdateMenus (false);
 		}
 
 		[KSPEvent (guiActiveEditor = true, guiName = "Show UI", active = false)]
 		public void ShowUI ()
 		{
-			ContainerWindow.ShowGUI (this);
+			MSCWindowManager.ShowGUI (this);
 			UpdateMenus (true);
 		}
 
